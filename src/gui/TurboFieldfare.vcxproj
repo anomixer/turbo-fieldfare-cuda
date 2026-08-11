@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The GUI is the one part of this repository that is not built by CMake.
+
+  WinUI needs MSBuild: its package injects targets that a CMake-generated
+  project does not run. Rather than fight that, this project links the static
+  libraries CMake already built and is driven by scripts/build-gui.ps1.
+
+  There is no XAML markup, so midl and the XAML compiler never run - the visual
+  tree is built in code. That is what keeps this to a single project file
+  instead of a second project system.
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7B2D4E10-9C31-4A55-9F0E-3A1C6D2F8B44}</ProjectGuid>
+    <RootNamespace>TurboFieldfare</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
+    <!--
+      This was false, to keep the XAML markup compiler out of a project whose
+      visual tree is built in code. That does not work: with no markup at all
+      there is no Application definition, nothing populates
+      Application.Resources, and every control is left without a template, so
+      the window dies in its first layout pass. Loading XamlControlsResources by
+      hand does not substitute for it - it needs a resource index that only this
+      build step produces.
+
+      App.xaml is therefore the one piece of markup in the project. The tree is
+      still built in code; the markup exists only to carry the control styles.
+    -->
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <AppxPackage>false</AppxPackage>
+    <!-- main.cpp performs bootstrap explicitly and reports its HRESULT. -->
+    <WindowsAppSdkAutoInitialize>false</WindowsAppSdkAutoInitialize>
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
+    <WindowsAppSdkDeploymentManagerInitialize>false</WindowsAppSdkDeploymentManagerInitialize>
+    <WindowsAppSdkUndockedRegFreeWinRTInitialize>false</WindowsAppSdkUndockedRegFreeWinRTInitialize>
+    <WindowsAppSdkCompatibilityInitialize>false</WindowsAppSdkCompatibilityInitialize>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <!--
+      The legacy project.json resolver otherwise runs instead of the
+      PackageReference path and fails with "Sequence contains no elements".
+    -->
+    <ResolveNuGetPackages>false</ResolveNuGetPackages>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <UseDebugLibraries Condition="'$(Configuration)'!='Debug'">false</UseDebugLibraries>
+    <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">false</WholeProgramOptimization>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <PropertyGroup>
+    <!-- Where scripts/build-gui.ps1 puts the result, beside tf-decode.exe. -->
+    <OutDir>$(SolutionDir)build\gui\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\gui\obj\$(Configuration)\</IntDir>
+    <TfLibDir Condition="'$(TfLibDir)'==''">$(SolutionDir)build\release\src\</TfLibDir>
+    <!-- Windows App SDK 1.7 exposes a .winmd through ReferencePath. MSBuild's
+         ResolveAssemblyReference reports that path as MSB3106 even though the
+         WinUI build consumes it correctly and the executable links normally. -->
+    <NoWarn>MSB3106;%(NoWarn)</NoWarn>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <!-- The core headers use std::expected, so this has to match the CMake build. -->
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ConformanceMode>true</ConformanceMode>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <!--
+        $(IntDir) is where the markup compiler writes App.xaml.g.h. Without it
+        App.g.h's __has_include quietly misses, and the only symptom is
+        InitializeComponent not being declared.
+      -->
+      <AdditionalIncludeDirectories>$(IntDir);$(IntermediateOutputPath);$(SolutionDir)src\svc;$(SolutionDir)src\core\include;$(SolutionDir)src\runtime\include;$(SolutionDir)src\gpu\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!--
+        The markup compiler emits XamlTypeInfo.g.cpp, which implements classic
+        COM interfaces and so requires unknwn.h ahead of the C++/WinRT headers.
+        A project with a precompiled header would get that from the PCH; this
+        one has none, and the generated file is not ours to edit.
+      -->
+      <ForcedIncludeFiles>unknwn.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <Optimization Condition="'$(Configuration)'=='Release'">MaxSpeed</Optimization>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
+      <!-- The generated Media.Animation header trips this against the Win32 macro. -->
+      <DisableSpecificWarnings>4002;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <!--
+        tfsvc and tfcore are the whole dependency. tfruntime is here only for
+        SamplingParams::validate(); a static link pulls that object and nothing
+        else, so this executable has no GPU dependency at all.
+      -->
+      <AdditionalDependencies>$(TfLibDir)svc\tfsvc.lib;$(TfLibDir)core\tfcore.lib;$(TfLibDir)runtime\tfruntime.lib;bcrypt.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ClCompile Include="AppModel.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AppModel.h" />
+  </ItemGroup>
+
+  <!--
+    The only markup in the project. It carries the control styles and nothing
+    else; see App.xaml. The IDL is what makes App a runtime class, which
+    x:Class requires.
+  -->
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+    <Midl Include="App.idl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="2.0.240111.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <!--
+    Runs the XAML markup compiler by hand, because nothing else will.
+
+    The Windows App SDK hooks MarkupCompilePass1 into PrepareResources, which is
+    a managed-project target that a vcxproj never runs. Its own comment points
+    native builds at Microsoft.Windows.UI.Xaml.Cpp.targets, which ships with a
+    Visual Studio component that is not installed here and is not in the
+    package. The target itself is imported and its condition is satisfied, so
+    all that is missing is the sequencing and the reference metadata.
+
+    Without this the compiler is silently never invoked: no App.xaml.g.h, no
+    InitializeComponent, no control styles, and a window that dies in its first
+    layout pass.
+  -->
+  <PropertyGroup>
+    <TfSdkPackage>$(NuGetPackageRoot)microsoft.windowsappsdk\1.7.250606001</TfSdkPackage>
+    <!--
+      Pass 1 emits XamlTypeInfo.Impl.g.cpp, which calls into a type table that
+      only pass 2 writes. Without this the link fails on
+      XamlTypeInfoProvider::CreateXamlType.
+    -->
+    <XamlRequiresCompilationPass2>true</XamlRequiresCompilationPass2>
+  </PropertyGroup>
+
+  <Target Name="TfCollectXamlReferences" BeforeTargets="MarkupCompilePass1;MarkupCompilePass2">
+    <ItemGroup>
+      <!-- WMC1007 "cannot resolve metadata for WinUI types" is this being empty. -->
+      <ReferencePath Include="$(TfSdkPackage)\lib\uap10.0\*.winmd" />
+      <ReferencePath Include="$(TfSdkPackage)\lib\uap10.0.18362\*.winmd" />
+      <!--
+        The platform contracts, not UnionMetadata\Windows.winmd. The compiler
+        resolves by assembly identity, so it asks for
+        Windows.Foundation.FoundationContract by name and the union metadata
+        does not answer to it.
+      -->
+      <ReferencePath Include="$(WindowsSdkDir)References\$(WindowsTargetPlatformVersion)\**\*.winmd" />
+      <!-- Pass 2 resolves this project's own types, so it needs our winmd. -->
+      <ReferencePath Include="$(IntDir)Merged\$(RootNamespace).winmd"
+                     Condition="Exists('$(IntDir)Merged\$(RootNamespace).winmd')" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="TfMarkupCompile" BeforeTargets="ClCompile"
+          DependsOnTargets="MarkupCompilePass1;MarkupCompilePass2">
+    <!--
+      The markup compiler writes the type-info provider as a source file and
+      expects the build to compile it. Nothing adds it here, so App's
+      IXamlMetadataProvider implementation is declared and never defined, and it
+      surfaces at link time as unresolved XamlMetaDataProvider::GetXamlType.
+    -->
+    <ItemGroup>
+      <ClCompile Include="$(IntDir)XamlTypeInfo.Impl.g.cpp"
+                 Condition="Exists('$(IntDir)XamlTypeInfo.Impl.g.cpp')" />
+      <!-- Pass 2's output: the type table the Impl file calls into. -->
+      <ClCompile Include="$(IntDir)XamlTypeInfo.g.cpp"
+                 Condition="Exists('$(IntDir)XamlTypeInfo.g.cpp')" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Referenced by the common targets once XAML processing is on, but its real
+    definition lives behind the packaging path this project does not take. The
+    work it would do is done by TfCopyXbf below, so a no-op satisfies the
+    reference.
+  -->
+  <Target Name="AddProcessedXamlFilesToCopyLocal" />
+
+  <!--
+    App.xbf is the compiled markup. It is loaded by name at runtime, so it has
+    to sit beside the executable; the app starts and then fails to find its own
+    resources without it.
+  -->
+  <Target Name="TfCopyXbf" AfterTargets="Build">
+    <Copy SourceFiles="@(_GeneratedXbfFiles)" DestinationFolder="$(OutDir)"
+          Condition="'@(_GeneratedXbfFiles)' != ''" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(IntDir)App.xbf" DestinationFolder="$(OutDir)"
+          Condition="'@(_GeneratedXbfFiles)' == '' And Exists('$(IntDir)App.xbf')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
