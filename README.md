@@ -144,6 +144,8 @@ validated on the target GPU class. Until then, build from source with
 - `dlmodel.bat`: downloads the model into the archive's `models` directory when
   it is not already installed.
 - `quickbench.bat`: runs the 4/6/8/10/12 GB and full-resident VRAM benchmarks.
+- `scripts\bench-ollama.bat`: runs an Ollama comparison baseline. Its GB
+  labels are requested reservations, not exact VRAM planner targets.
 - `scripts\fetch-checkpoint.ps1`: downloader used by `dlmodel.bat`.
 - `build-info.json`: profile, version, timestamp, and dependency metadata.
 - `<archive>.sha256`: checksum for verifying the ZIP before extraction.
