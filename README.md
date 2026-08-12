@@ -28,6 +28,10 @@ On an NVIDIA L4 (`sm_89`, 24 GB), the CUDA runtime has been validated with Gemma
 
 These are L4 budget simulations. Performance on physical low-VRAM cards depends on GPU compute, PCIe, system RAM, NVMe throughput, and driver configuration.
 
+An additional RTX 4000 SFF Ada run is recorded in
+[`docs/RTX4000_SFF_ADA_BENCHMARK.md`](docs/RTX4000_SFF_ADA_BENCHMARK.md). It
+must not be compared directly with the L4 table as a same-hardware result.
+
 ## GPU support policy
 
 `sm_89` is the initial validated target: NVIDIA L4 and Ada GeForce/workstation GPUs such as RTX 4060 and newer Ada cards.
