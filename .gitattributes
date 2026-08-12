@@ -1,0 +1,38 @@
+# Normalize line endings so the working tree stays stable regardless of each
+# developer's core.autocrlf setting. Text is stored LF in the repository.
+* text=auto
+
+# Sources and build files
+*.c      text diff=cpp
+*.cc     text diff=cpp
+*.cpp    text diff=cpp
+*.h      text diff=cpp
+*.hpp    text diff=cpp
+*.cu     text diff=cpp
+*.cuh    text diff=cpp
+*.hlsl   text
+*.metal  text diff=cpp
+*.cmake  text
+CMakeLists.txt text
+*.json   text
+*.md     text diff=markdown
+*.py     text diff=python
+
+# Scripts. PowerShell tolerates LF, but batch files genuinely require CRLF.
+*.ps1    text eol=lf
+*.sh     text eol=lf
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+
+# MSBuild files for the M11 WinUI 3 project - Visual Studio rewrites these with
+# CRLF, so declaring it avoids a diff every time the IDE touches them.
+*.vcxproj         text eol=crlf
+*.vcxproj.filters text eol=crlf
+*.sln             text eol=crlf
+
+# Binary fixtures and assets
+*.png       binary
+*.ico       binary
+*.safetensors binary
+*.gturbo    binary
+*.bin       binary

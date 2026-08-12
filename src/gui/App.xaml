@@ -1,0 +1,26 @@
+<!--
+    The one piece of markup in the project, and it exists for a reason that is
+    not stylistic.
+
+    Building the visual tree in code is fine. Having no Application definition
+    at all is not: without it nothing populates Application.Resources, so every
+    control is left with no template, and the app dies in its first layout pass
+    with a bare E_FAIL. Loading XamlControlsResources by hand does not work
+    either, because it needs a resource index that only the XAML build step
+    produces.
+
+    So this file is what makes the controls have styles and what makes a
+    resources.pri exist. It deliberately contains nothing else.
+-->
+<Application
+    x:Class="TurboFieldfare.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
