@@ -44,11 +44,15 @@ if (-not (Test-Path $server)) {
     if (-not $asset) { Fail "No Windows CUDA $cudaMajor llama.cpp asset found in $($release.tag_name)." }
     $zip = Join-Path $env:TEMP $asset.name
     Download $asset.browser_download_url $zip
-    Expand-Archive -LiteralPath $zip -DestinationPath $tools -Force
+    $extract = Join-Path $tools $release.tag_name
+    if (Test-Path $extract) { Remove-Item $extract -Recurse -Force }
+    Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
     Remove-Item $zip -Force
-    $found = Get-ChildItem $tools -Recurse -Filter 'llama-server.exe' | Select-Object -First 1
+    $found = Get-ChildItem $extract -Recurse -Filter 'llama-server.exe' | Select-Object -First 1
     if (-not $found) { Fail 'Downloaded archive did not contain llama-server.exe.' }
-    Copy-Item $found.FullName $server -Force
+    # Keep the CUDA runtime DLLs beside llama-server.exe; do not copy only the
+    # executable out of the archive.
+    $server = $found.FullName
 }
 
 if (-not $ModelPath) { $ModelPath = Join-Path $root 'models\gemma-4-26B_q4_0-it.gguf' }
