@@ -146,6 +146,9 @@ validated on the target GPU class. Until then, build from source with
 - `quickbench.bat`: runs the 4/6/8/10/12 GB and full-resident VRAM benchmarks.
 - `scripts\bench-ollama.bat`: runs an Ollama comparison baseline. Its GB
   labels are requested reservations, not exact VRAM planner targets.
+- `bench-llama.bat`: downloads the matching CUDA 12/13 llama.cpp Windows
+  server, downloads Google's official Q4_0 GGUF when absent, and runs the
+  layer-offload comparison benchmark.
 - `scripts\fetch-checkpoint.ps1`: downloader used by `dlmodel.bat`.
 - `build-info.json`: profile, version, timestamp, and dependency metadata.
 - `<archive>.sha256`: checksum for verifying the ZIP before extraction.

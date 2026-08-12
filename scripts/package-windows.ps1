@@ -61,6 +61,8 @@ foreach ($launcher in @('server.bat', 'dlmodel.bat')) {
 Copy-Item (Join-Path $root 'gui.bat') $stage
 Copy-Item (Join-Path $root 'scripts\quickbench.bat') (Join-Path $stage 'quickbench.bat')
 Copy-Item (Join-Path $root 'scripts\bench-ollama.bat') (Join-Path $stage 'bench-ollama.bat')
+Copy-Item (Join-Path $root 'bench-llama.bat') (Join-Path $stage 'bench-llama.bat')
+Copy-Item (Join-Path $root 'scripts\bench-llama.ps1') (Join-Path $stage 'scripts')
 New-Item -ItemType Directory -Path (Join-Path $stage 'scripts') -Force | Out-Null
 Copy-Item (Join-Path $root 'scripts\fetch-checkpoint.ps1') (Join-Path $stage 'scripts')
 @{
