@@ -28,7 +28,7 @@ echo.
 
 if not exist "%ROOT%models" mkdir "%ROOT%models"
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\fetch-checkpoint.ps1" -OutputDir "%ROOT%models"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\fetch-checkpoint.ps1" -Destination "%ROOT%models"
 if errorlevel 1 exit /b 1
 
 if not exist "%MODEL%" (
