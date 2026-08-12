@@ -58,6 +58,7 @@ Copy-Item (Join-Path $root 'LICENSE') $stage -ErrorAction SilentlyContinue
 foreach ($launcher in @('server.bat', 'dlmodel.bat')) {
     Copy-Item (Join-Path $root $launcher) $stage
 }
+Copy-Item (Join-Path $root 'gui.bat') $stage
 Copy-Item (Join-Path $root 'scripts\quickbench.bat') (Join-Path $stage 'quickbench.bat')
 New-Item -ItemType Directory -Path (Join-Path $stage 'scripts') -Force | Out-Null
 Copy-Item (Join-Path $root 'scripts\fetch-checkpoint.ps1') (Join-Path $stage 'scripts')

@@ -139,6 +139,8 @@ validated on the target GPU class. Until then, build from source with
 - `bin\tf-preflight.exe`: checks the GPU, driver, CUDA, and model prerequisites.
 - `gui\TurboFieldfare.exe`: WinUI desktop chat client.
 - `server.bat`: starts the packaged `tf-server.exe` and resolves the model.
+- `gui.bat`: launches the WinUI desktop GUI from either a source build or a
+  prebuilt archive.
 - `dlmodel.bat`: downloads the model into the archive's `models` directory when
   it is not already installed.
 - `quickbench.bat`: runs the 4/6/8/10/12 GB and full-resident VRAM benchmarks.
