@@ -32,8 +32,15 @@ $server = Join-Path $tools 'llama-server.exe'
 if (-not (Test-Path $server)) {
     $release = Invoke-RestMethod 'https://api.github.com/repos/ggml-org/llama.cpp/releases/latest'
     $asset = $release.assets | Where-Object {
-        $_.name -match '(?i)win.*cuda' -and $_.name -match "cuda\s*${cudaMajor}|cuda${cudaMajor}" -and $_.name -match '(?i)\.zip$'
+        $_.name -match "^llama-.*-bin-win-cuda-${cudaMajor}(?:\.\d+)?-x64\.zip$"
     } | Select-Object -First 1
+    # Modern L4 builds may use a newer CUDA 13.x minor release than the
+    # installed toolkit; the llama.cpp binary is still driver-compatible.
+    if (-not $asset -and $cudaMajor -eq '13') {
+        $asset = $release.assets | Where-Object {
+            $_.name -match '^llama-.*-bin-win-cuda-13\.\d+-x64\.zip$'
+        } | Select-Object -First 1
+    }
     if (-not $asset) { Fail "No Windows CUDA $cudaMajor llama.cpp asset found in $($release.tag_name)." }
     $zip = Join-Path $env:TEMP $asset.name
     Download $asset.browser_download_url $zip
