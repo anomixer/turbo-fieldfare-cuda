@@ -14,7 +14,13 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 function Fail([string]$Message) { Write-Host "ERROR: $Message" -ForegroundColor Red; exit 1 }
 function Download([string]$Uri, [string]$Destination, [hashtable]$Headers = @{}) {
     Write-Host "Downloading $Uri" -ForegroundColor Cyan
-    Invoke-WebRequest -Uri $Uri -OutFile $Destination -Headers $Headers -UseBasicParsing
+    if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
+        Fail 'curl.exe was not found. Windows 10/11 includes it by default.'
+    }
+    $args = @('-L', '--fail', '--retry', '5', '--retry-delay', '2', '--continue-at', '-', '--output', $Destination)
+    foreach ($key in $Headers.Keys) { $args += @('-H', "$key`: $($Headers[$key])") }
+    & curl.exe @args $Uri
+    if ($LASTEXITCODE -ne 0) { Fail "Download failed with curl exit code $LASTEXITCODE." }
 }
 
 $smi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
