@@ -22,9 +22,9 @@ if not exist "%MODEL%" (
     exit /b 1
 )
 set "GPU_APPS="
-for /f "usebackq delims=" %%P in (`nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader 2^>nul`) do (
+for /f "usebackq delims=" %%P in (`nvidia-smi --query-compute-apps=pid --format=csv,noheader 2^>nul`) do (
     set "GPU_APPS=1"
-    echo WARNING: CUDA process already owns VRAM: %%P
+    echo WARNING: CUDA process already owns VRAM: PID %%P
 )
 if defined GPU_APPS (
     echo.
