@@ -8,6 +8,7 @@ if "%MODEL%"=="" set "MODEL=gemma-4:26b-a4b"
 set "PORT=11435"
 set "HOST=http://127.0.0.1:%PORT%"
 set "ROOT=%~dp0.."
+if exist "%~dp0bin" set "ROOT=%~dp0"
 set "LOGDIR=%ROOT%\benchlogs\ollama"
 if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
