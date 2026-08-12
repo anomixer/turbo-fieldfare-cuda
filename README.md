@@ -55,7 +55,8 @@ upstream `master` branch, not on assumptions about the original project.
   rechecks the toolchain.
 - **Windows launchers:** `server.bat` starts the existing `tf-server.exe`, and
   `dlmodel.bat` reuses either `.\models\gemma4.gturbo` or
-  `C:\models\gemma4.gturbo`, downloading only when both locations are absent.
+  `C:\models\gemma4.gturbo`, downloading and repacking the pinned checkpoint
+  only when both locations are absent.
 - **Unified build:** `build.bat` now builds the CMake binaries and then the
   WinUI 3 desktop GUI (`build\gui\Release\TurboFieldfare.exe`). The GUI build
   uses MSBuild and automatically discovers Visual Studio Community or Build

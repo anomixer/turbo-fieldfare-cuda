@@ -3,6 +3,8 @@ setlocal EnableExtensions
 
 set "ROOT=%~dp0"
 set "MODEL=%ROOT%models\gemma4.gturbo"
+set "REPACK=%ROOT%build\relwithdebinfo\bin\tf-repack.exe"
+if not exist "%REPACK%" set "REPACK=%ROOT%bin\tf-repack.exe"
 
 if exist "%MODEL%" (
   echo Model already exists at:
@@ -31,8 +33,22 @@ if not exist "%ROOT%models" mkdir "%ROOT%models"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%scripts\fetch-checkpoint.ps1" -Destination "%ROOT%models"
 if errorlevel 1 exit /b 1
 
-if not exist "%MODEL%" (
-  echo ERROR: Download completed but model not found at:
+if not exist "%REPACK%" (
+  echo ERROR: tf-repack.exe was not found.
+  echo Build the project or extract a complete prebuilt package first.
+  exit /b 1
+)
+
+if not exist "%MODEL%\manifest.json" (
+  echo.
+  echo Repacking checkpoint into:
+  echo   %MODEL%
+  "%REPACK%" --checkpoint "%ROOT%models" --output "%MODEL%"
+  if errorlevel 1 exit /b 1
+)
+
+if not exist "%MODEL%\manifest.json" (
+  echo ERROR: Repack completed but model manifest was not found at:
   echo   %MODEL%
   exit /b 1
 )
